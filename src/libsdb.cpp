@@ -1,8 +1,6 @@
-#ifndef SDB_LIBSDB_HPP
-#define SDB_LIBSDB_HPP
+#include <iostream>
+#include <libsdb/libsdb.hpp>
 
-namespace sdb {
-    void say_hello();
+void sdb::say_hello() {
+    std::cout << "Hello, sdb!\n";
 }
-
-#endif
