@@ -33,7 +33,7 @@ namespace {
         auto args = split(line, ' ');
         auto command = args[0];
 
-        if(is_prefix(command, "continue")) {
+        if (is_prefix(command, "continue")) {
             process->resume();
             auto reason = process->wait_on_signal();
             print_stop_reason(*process, reason);
@@ -43,7 +43,7 @@ namespace {
     }
 
     bool is_prefix(std::string_view str, std::string_view of) {
-        if(str.size() > of.size()) {
+        if (str.size() > of.size()) {
             return false;
         }
 
@@ -98,10 +98,10 @@ int main(int argc, const char** argv) {
         while ((line = readline("sdb> ")) != nullptr) {
             std::string line_str;
             
-            if(line == std::string_view("")) {
+            if (line == std::string_view("")) {
                 free(line);
                 
-                if(history_length > 0) {
+                if (history_length > 0) {
                     line_str = history_list()[history_length - 1]->line;
                 }
             } else {
@@ -110,7 +110,7 @@ int main(int argc, const char** argv) {
                 free(line);
             }
             
-            if(!line_str.empty()) {
+            if (!line_str.empty()) {
                 handle_command(process, line_str);
             }
         }

@@ -17,7 +17,6 @@ namespace sdb {
         int release_read();
         int release_write();
         void write(std::byte* from, std::size_t bytes);
-
     private:
         static constexpr unsigned read_fd = 0;
         static constexpr unsigned write_fd = 1;
