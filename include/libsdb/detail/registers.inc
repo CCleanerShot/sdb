@@ -1,0 +1,83 @@
+#ifndef DEFINE_REGISTER
+
+#error "This file is intended for textual inclusion with the\
+DEFINE_REGISTER macro defined"
+
+#endif
+
+#define GPR_OFFSET(reg) (offsetof(user, regs) + offsetof(user_regs_struct, reg))
+#define DEFINE_GPR_64(name, dwarf_id) DEFINE_REGISTER(name, dwarf_id, 8, GPR_OFFSET(name), register_type::gpr, register_format::uint)
+#define DEFINE_GPR_32(name, super) DEFINE_REGISTER(name, -1, 4, GPR_OFFSET(super), register_type::sub_gpr, register_format::uint)
+#define DEFINE_GPR_16(name, super) DEFINE_REGISTER(name, -1, 2, GPR_OFFSET(super), register_type::sub_gpr, register_format::uint)
+#define DEFINE_GPR_16(name, super) DEFINE_REGISTER(name, -1, 1, GPR_OFFSET(super) + 1, register_type::sub_gpr, register_format::uint)
+#define DEFINE_GPR_16(name, super) DEFINE_REGISTER(name, -1, 1, GPR_OFFSET(super), register_type::sub_gpr, register_format::uint)
+
+DEFINE_GPR_64(rax, 0),
+DEFINE_GPR_64(rdx, 1),
+DEFINE_GPR_64(rcx, 2),
+DEFINE_GPR_64(rbx, 3),
+DEFINE_GPR_64(rsi, 4),
+DEFINE_GPR_64(rdi, 5),
+DEFINE_GPR_64(rbp, 6),
+DEFINE_GPR_64(rsp, 7),
+DEFINE_GPR_64(r8, 8),
+DEFINE_GPR_64(r9, 9),
+DEFINE_GPR_64(r10, 10),
+DEFINE_GPR_64(r11, 11),
+DEFINE_GPR_64(r12, 12),
+DEFINE_GPR_64(r13, 13),
+DEFINE_GPR_64(r14, 14),
+DEFINE_GPR_64(r15, 15),
+DEFINE_GPR_64(rip, 16),
+DEFINE_GPR_64(eflags, 49),
+DEFINE_GPR_64(cs, 51),
+DEFINE_GPR_64(fs, 54),
+DEFINE_GPR_64(gs, 55),
+DEFINE_GPR_64(ss, 52),
+DEFINE_GPR_64(ds, 53),
+DEFINE_GPR_64(es, 50),
+DEFINE_GPR_64(orig_rax, -1),
+
+DEFINE_GPR_32(eax, rax), DEFINE_GPR_32(edx, rdx),
+DEFINE_GPR_32(ecx, rcx), DEFINE_GPR_32(ebx, rbx),
+DEFINE_GPR_32(esi, rsi), DEFINE_GPR_32(edi, rdi),
+DEFINE_GPR_32(ebp, rbp), DEFINE_GPR_32(esp, rsp),
+DEFINE_GPR_32(r8d, r8), DEFINE_GPR_32(r9d, r9),
+DEFINE_GPR_32(r10d, r10), DEFINE_GPR_32(r11d, r11),
+DEFINE_GPR_32(r12d, r12), DEFINE_GPR_32(r13d, r13),
+DEFINE_GPR_32(r14d, r14), DEFINE_GPR_32(r15d, r15),
+
+DEFINE_GPR_16(ax, rax), DEFINE_GPR_16(dx, rdx),
+DEFINE_GPR_16(cx, rcx), DEFINE_GPR_16(bx, rbx),
+DEFINE_GPR_16(si, rsi), DEFINE_GPR_16(di, rdi),
+DEFINE_GPR_16(bp, rbp), DEFINE_GPR_16(sp, rsp),
+DEFINE_GPR_16(r8w, r8), DEFINE_GPR_16(r9w, r9),
+DEFINE_GPR_16(r10w, r10), DEFINE_GPR_16(r11w, r11),
+DEFINE_GPR_16(r12w, r12), DEFINE_GPR_16(r13w, r13),
+DEFINE_GPR_16(r14w, r14), DEFINE_GPR_16(r15w, r15),
+
+DEFINE_GPR_8(ah, rax), DEFINE_GPR_8(dh, rdx),
+DEFINE_GPR_8(ch, rcx), DEFINE_GPR_8(bh, rbx),
+
+DEFINE_GPR_8(al, rax), DEFINE_GPR_8(dl, rdx),
+DEFINE_GPR_8(cl, rcx), DEFINE_GPR_8(bl, rbx),
+DEFINE_GPR_8(sil, rsi), DEFINE_GPR_8(dil, rdi),
+DEFINE_GPR_8(bpl, rbp), DEFINE_GPR_8(spl, rsp),
+DEFINE_GPR_8(r8b, r8), DEFINE_GPR_8(r9b, r9),
+DEFINE_GPR_8(r10b, r10), DEFINE_GPR_8(r11b, r11),
+DEFINE_GPR_8(r12b, r12), DEFINE_GPR_8(r13b, r13),
+DEFINE_GPR_8(r14b, r14), DEFINE_GPR_8(r15b, r15),
+
+
+
+
+
+
+
+
+
+
+
+
+
+
