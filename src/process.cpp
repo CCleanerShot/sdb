@@ -69,10 +69,12 @@ std::unique_ptr<sdb::process> sdb::process::attach(pid_t pid) {
 
 std::unique_ptr<sdb::process> sdb::process::launch(std::filesystem::path path, bool debug) {
     pipe channel(true);
-    pid_t pid;
-    if ((pid = fork()) < 0) {
+    pid_t pid = fork();
+
+    if (pid < 0) {
         error::send_errno("fork failed");
     }
+    
     if(pid == 0) {
         channel.close_read();
         
@@ -100,7 +102,7 @@ std::unique_ptr<sdb::process> sdb::process::launch(std::filesystem::path path, b
         auto chars = reinterpret_cast<char*>(data.data());
         error::send(std::string(chars, chars + data.size()));
     }
-    
+
     std::unique_ptr<process> proc(new process(pid, true, debug));
     
     if(debug) {
