@@ -14,6 +14,7 @@ namespace {
     }
 }
 
+#pragma region STATIC_METHODS
 std::unique_ptr<sdb::process> sdb::process::attach(pid_t pid) {
     if(pid == 0) {
         error::send("Invalid pid");
@@ -30,43 +31,6 @@ std::unique_ptr<sdb::process> sdb::process::attach(pid_t pid) {
     return proc;
 }
 
-// std::unique_ptr<sdb::process>
-// sdb::process::launch(std::filesystem::path path, bool debug) {
-//     pipe channel(/*close_on_exec=*/true);
-//     pid_t pid;
-//     if ((pid = fork()) < 0) {
-//         error::send_errno("fork failed");
-//     }
-
-//     if (pid == 0) {
-//         channel.close_read();
-//         if (debug and ptrace(PTRACE_TRACEME, 0, nullptr, nullptr) < 0) {
-//             exit_with_perror(channel, "Tracing failed");
-//         }
-//         if (execlp(path.c_str(), path.c_str(), nullptr) < 0) {
-//             exit_with_perror(channel, "exec failed");
-//         }
-//     }
-
-//     channel.close_write();
-//     auto data = channel.read();
-//     channel.close_read();
-
-//     if (data.size() > 0) {
-//         waitpid(pid, nullptr, 0);
-//         auto chars = reinterpret_cast<char*>(data.data());
-//         error::send(std::string(chars, chars + data.size()));
-//     }
-
-//     std::unique_ptr<process> proc(
-//         new process(pid, /*terminate_on_end=*/true, debug));
-//     if (debug) {
-//         proc->wait_on_signal();
-//     }
-
-//     return proc;
-// }
-
 std::unique_ptr<sdb::process> sdb::process::launch(std::filesystem::path path, bool debug) {
     pipe channel(true);
     pid_t pid = fork();
@@ -74,7 +38,7 @@ std::unique_ptr<sdb::process> sdb::process::launch(std::filesystem::path path, b
     if (pid < 0) {
         error::send_errno("fork failed");
     }
-    
+
     if(pid == 0) {
         channel.close_read();
         
@@ -111,7 +75,9 @@ std::unique_ptr<sdb::process> sdb::process::launch(std::filesystem::path path, b
     
     return proc;
 }
+#pragma endregion
 
+#pragma region CLASS_METHODS
 sdb::process::~process() {
     if(pid_ != 0) {
         int status;
@@ -173,3 +139,4 @@ sdb::stop_reason sdb::process::wait_on_signal() {
     state_ = reason.reason;
     return reason;
 }
+#pragma endregion
