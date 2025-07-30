@@ -6,7 +6,6 @@
 
 namespace sdb {
     class error : public std::runtime_error {
-
     public:
         [[noreturn]]
         static void send(const std::string& what) { throw error(what); }

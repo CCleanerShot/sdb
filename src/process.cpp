@@ -1,19 +1,19 @@
-#include <algorithm>
 #include <iostream>
-#include <sstream>
-#include <string>
-#include <string_view>
-#include <vector>
-#include <editline/readline.h>
 #include <libsdb/error.hpp>
-#include <libsdb/libsdb.hpp>
+#include <libsdb/pipe.hpp>
 #include <libsdb/process.hpp>
 #include <sys/ptrace.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <unistd.h>
 
-#pragma region STATIC_METHODS
+namespace {
+    void exit_with_perror(sdb::pipe& channel, std::string const& prefix) {
+        auto message = prefix + ": " + std::strerror(errno);
+        channel.write(reinterpret_cast<std::byte*>(message.data()), message.size());
+        exit(-1);
+    }
+}
+
 std::unique_ptr<sdb::process> sdb::process::attach(pid_t pid) {
     if(pid == 0) {
         error::send("Invalid pid");
@@ -25,53 +25,105 @@ std::unique_ptr<sdb::process> sdb::process::attach(pid_t pid) {
         error::send_errno("Could not attach");
     }
 
-    std::unique_ptr<process> proc (new process(pid, false));
+    std::unique_ptr<process> proc (new process(pid, false, true));
     proc->wait_on_signal();
     return proc;
 }
 
-std::unique_ptr<sdb::process> sdb::process::launch(std::filesystem::path path) {
-    pid_t pid = fork();
+// std::unique_ptr<sdb::process>
+// sdb::process::launch(std::filesystem::path path, bool debug) {
+//     pipe channel(/*close_on_exec=*/true);
+//     pid_t pid;
+//     if ((pid = fork()) < 0) {
+//         error::send_errno("fork failed");
+//     }
 
-    if(pid < 0) {
-        error::send_errno("Forking failed");
+//     if (pid == 0) {
+//         channel.close_read();
+//         if (debug and ptrace(PTRACE_TRACEME, 0, nullptr, nullptr) < 0) {
+//             exit_with_perror(channel, "Tracing failed");
+//         }
+//         if (execlp(path.c_str(), path.c_str(), nullptr) < 0) {
+//             exit_with_perror(channel, "exec failed");
+//         }
+//     }
+
+//     channel.close_write();
+//     auto data = channel.read();
+//     channel.close_read();
+
+//     if (data.size() > 0) {
+//         waitpid(pid, nullptr, 0);
+//         auto chars = reinterpret_cast<char*>(data.data());
+//         error::send(std::string(chars, chars + data.size()));
+//     }
+
+//     std::unique_ptr<process> proc(
+//         new process(pid, /*terminate_on_end=*/true, debug));
+//     if (debug) {
+//         proc->wait_on_signal();
+//     }
+
+//     return proc;
+// }
+
+std::unique_ptr<sdb::process> sdb::process::launch(std::filesystem::path path, bool debug) {
+    pipe channel(true);
+    pid_t pid;
+    if ((pid = fork()) < 0) {
+        error::send_errno("fork failed");
     }
-
     if(pid == 0) {
-        long ptrace_result = ptrace(PTRACE_TRACEME, pid, /*addr=*/nullptr, /*data=*/nullptr);
+        channel.close_read();
+        
+        if(debug) {
+            long ptrace_result = ptrace(PTRACE_TRACEME, 0, nullptr, nullptr);
 
-        if(ptrace_result < 0) {
-            error::send_errno("Tracing failed");
+            if(ptrace_result < 0) {
+                exit_with_perror(channel, "Tracing failed");
+            }
         }
-
+        
         int execlp_result = execlp(path.c_str(), path.c_str(), nullptr);
 
         if(execlp_result < 0) {
-            error::send_errno("Exec failed");
+            exit_with_perror(channel, "Exec failed");
         }
+    }
 
+    channel.close_write();
+    auto data = channel.read();
+    channel.close_read();
+
+    if(data.size() > 0) {
+        waitpid(pid, nullptr, 0);
+        auto chars = reinterpret_cast<char*>(data.data());
+        error::send(std::string(chars, chars + data.size()));
     }
     
-    std::unique_ptr<process> proc (new process(pid, true));
-    proc->wait_on_signal();
+    std::unique_ptr<process> proc(new process(pid, true, debug));
+    
+    if(debug) {
+        proc->wait_on_signal();
+    }
     
     return proc;
 }
-#pragma endregion
 
-#pragma region CLASS_METHODS
 sdb::process::~process() {
     if(pid_ != 0) {
         int status;
 
-        if(state_ == process_state::running) {
-            kill(pid_, SIGSTOP);
-            waitpid(pid_, &status, 0);
+        if(is_attached_) {
+            if(state_ == process_state::running) {
+                kill(pid_, SIGSTOP);
+                waitpid(pid_, &status, 0);
+            }
+            
+            ptrace(PTRACE_DETACH, pid_, nullptr, nullptr);
+            kill(pid_, SIGCONT);
         }
-
-        ptrace(PTRACE_DETACH, pid_, nullptr, nullptr);
-        kill(pid_, SIGCONT);
-
+            
         if(terminate_on_end_) {
             kill(pid_, SIGKILL);
             waitpid(pid_, &status, 0);
@@ -119,4 +171,3 @@ sdb::stop_reason sdb::process::wait_on_signal() {
     state_ = reason.reason;
     return reason;
 }
-#pragma endregion
